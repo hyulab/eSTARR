@@ -3,7 +3,8 @@
 cd data
 
 # GENCODE gene annotations
-wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_29/gencode.v29.annotation.gtf.gz
+# Make sure all coordinates are hg19!
+wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_32/gencode.v32lift37.annotation.gtf.gz
 
 # GRO-cap TSS data, must be downloaded manually from:
 # https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE60456&format=file
