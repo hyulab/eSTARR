@@ -9,7 +9,7 @@ suppressPackageStartupMessages({
 nthread=8;
 registerDoParallel(nthread);
 genomef = "./data/hg19.fa.gz";
-gencodef = "./data/gencode.v29.annotation.gtf.gz"
+gencodef = "./data/gencode.v32lift37.annotation.gtf.gz"
 
 
 plogP = function(x) {
