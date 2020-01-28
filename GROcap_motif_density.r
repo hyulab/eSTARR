@@ -106,7 +106,7 @@ drawHeatmap = function(motifs, TREs, tfname) {
   steps = floor(length(mTREs) / nrow(fwds));
   idx = rbind(
     cbind( 1:nrow(fwds), 414 ),
-    cbind( 1:nrow(fwds), 414 - 4*floor(mTREs$sep[(1:nrow(fwds)) * steps]/4) )
+    cbind( 1:nrow(fwds), 414 - 4*ceiling(mTREs$sep[(1:nrow(fwds)) * steps]/4) )
   );
   fwds[idx] = 2;
   revs[idx] = 2;
@@ -119,9 +119,9 @@ drawHeatmap = function(motifs, TREs, tfname) {
   gradcols = colorRampPalette( c("dodgerblue", "white", "firebrick") )(200);
 
   image(
-    x = 4*(1:125) - 400,
+    x = 4*(0:125) - 400,
     y = 1:nrow(out),
-    z = t(out[,4*(1:125)+14]),
+    z = t(out[,14+4*(0:125)]),
     xlab='Distance from maxTSN (bp)',
     ylab=paste(length(mTREs), 'TREs'),
     yaxt='n', main=tfname, useRaster=F,
@@ -153,7 +153,7 @@ for( cellType in c('k562', 'gm12878') ) {
   # get motifs expressed in each cell type using GRO-seq data
   xmtfs = tfbs.selectExpressedMotifs( hsmotifs, genomef, gencodef, bw.plus, bw.minus, seq.datatype="GRO-seq", ncores=nthread );
 #  tfIDs = apply(xmtfs@tf_info[,c('Motif_ID', 'providerName')], 1, paste, collapse=' ');
-	tfIDs = apply(xmtfs@tf_info[,c('TF_Name', 'Motif_ID')], 1, paste, collapse=' ')
+  tfIDs = apply(xmtfs@tf_info[,c('TF_Name', 'Motif_ID')], 1, paste, collapse=' ')
   tfIDs = substr(tfIDs, 0, sapply(tfIDs, nchar, USE.NAMES=F)-5);
   tfIDs = gsub( "/", ".", tfIDs, fixed=T );
 
@@ -162,8 +162,10 @@ for( cellType in c('k562', 'gm12878') ) {
   colnames(dTSS) = c("seqnames", "start", "end", "TypeRev", "TypeFwd", "strand");
   dTSS = as(dTSS, "GRanges");
   dTSS = dTSS[ seqnames(dTSS) %in% paste0("chr", 1:22) ];
-  dTSS = dTSS[ width(dTSS) <= 520 ];
-  dTSS$sep = width(dTSS)-120;
+  start(dTSS) = start(dTSS)+60;
+  end(dTSS) = end(dTSS)-60;
+  dTSS = dTSS[ width(dTSS) <= 400 ];
+  dTSS$sep = width(dTSS);
 
   # load read counts
   bwpl = import( paste0("./data/groseq_", cellType, "_wTAP_plus.bw") , which=dTSS );
@@ -176,12 +178,10 @@ for( cellType in c('k562', 'gm12878') ) {
   hits = findOverlaps(bwmn, dTSS);
   dTSS$rev = aggregate( bwmn$score[hits@from] ~ hits@to, FUN='sum' )[,2];
 
-  # use weaker strand coordinates so that...
-  strand(dTSS) = ifelse( dTSS$fwd > dTSS$rev, "-", "+" );
-  # ...promoter window is set by maxTSS (5' of weaker strand)
-  dTSS = unique( promoters( dTSS, upstream=40, downstream=460 ) );
-  # set strand to reflect maxTSS
+  # set strand to specify maxTSS
   strand(dTSS) = ifelse( dTSS$fwd > dTSS$rev, "+", "-" );
+  dTSS = resize(dTSS, width=1, fix="end");
+  dTSS = unique(promoters(dTSS, upstream=400, downstream=104));
 
   # load GENCODE gene info
   gencg = read.table(gzfile(gencodef), header=F, sep="\t");
